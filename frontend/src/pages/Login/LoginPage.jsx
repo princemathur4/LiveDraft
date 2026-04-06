@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../api/client";
+import { parseApiError, formatErrorMessage } from "../../api/errors";
 import "./LoginPage.css";
 
 function LoginPage({ onSwitch, onSuccess }) {
@@ -21,7 +22,18 @@ function LoginPage({ onSwitch, onSuccess }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Login failed");
+      if (!res.ok) {
+        // Handle validation errors and other errors
+        if (Array.isArray(data.detail)) {
+          const errorsByField = parseApiError(data);
+          const formattedError = formatErrorMessage(errorsByField);
+          throw new Error(formattedError);
+        } else if (typeof data.detail === "string") {
+          throw new Error(data.detail);
+        } else {
+          throw new Error("Login failed");
+        }
+      }
 
       const meRes = await apiFetch("/api/auth/me", {
         headers: { Authorization: `Bearer ${data.access_token}` },
@@ -39,10 +51,17 @@ function LoginPage({ onSwitch, onSuccess }) {
 
   return (
     <div className="login-page">
+      <h1 className="login-page__title">SyncScribe</h1>
       <div className="login-page__card">
-        <h2 className="login-page__title">Sign in to SyncScribe</h2>
+        <h2 className="login-page__cardtitle">Sign in</h2>
 
-        {error && <div className="login-page__error">{error}</div>}
+        {error && (
+          <div className="login-page__error">
+            {error.split('\n').map((line, idx) => (
+              <div key={idx}>{line}</div>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <label className="login-page__label">Username</label>

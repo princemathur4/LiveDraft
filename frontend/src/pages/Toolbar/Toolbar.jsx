@@ -1,6 +1,19 @@
 import "./Toolbar.css";
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Code2,
+  CodeSquare,
+} from "lucide-react";
 
-function Toolbar({ editorViewRef }) {
+function Toolbar({ editorViewRef, pageTitle }) {
 
   // Wraps the currently selected text with a prefix and suffix
   // e.g. prefix="**" suffix="**" turns "hello" into "**hello**"
@@ -44,32 +57,42 @@ function Toolbar({ editorViewRef }) {
   };
 
   const buttons = [
-    { label: "B",      title: "Bold",          action: () => wrapSelection("**", "**"),  modifier: "bold" },
-    { label: "I",      title: "Italic",         action: () => wrapSelection("*", "*"),    modifier: "italic" },
-    { label: "~~S~~",  title: "Strikethrough",  action: () => wrapSelection("~~", "~~"), modifier: null },
-    { label: "H1",     title: "Heading 1",      action: () => insertLinePrefix("# "),     modifier: null },
-    { label: "H2",     title: "Heading 2",      action: () => insertLinePrefix("## "),    modifier: null },
-    { label: "H3",     title: "Heading 3",      action: () => insertLinePrefix("### "),   modifier: null },
-    { label: "• List", title: "Bullet List",    action: () => insertLinePrefix("- "),     modifier: null },
-    { label: "1. List",title: "Numbered List",  action: () => insertLinePrefix("1. "),   modifier: null },
-    { label: "> Quote",title: "Blockquote",     action: () => insertLinePrefix("> "),     modifier: null },
-    { label: "</>",    title: "Inline Code",    action: () => wrapSelection("`", "`"),    modifier: "mono" },
-    { label: "```",    title: "Code Block",     action: () => wrapSelection("```\n", "\n```"), modifier: "mono" },
+    { icon: Bold,       title: "Bold",          action: () => wrapSelection("**", "**"),  modifier: "bold" },
+    { icon: Italic,     title: "Italic",        action: () => wrapSelection("*", "*"),    modifier: "italic" },
+    { icon: Strikethrough, title: "Strikethrough", action: () => wrapSelection("~~", "~~"), modifier: null },
+    { icon: Heading1,   title: "Heading 1",     action: () => insertLinePrefix("# "),     modifier: null },
+    { icon: Heading2,   title: "Heading 2",     action: () => insertLinePrefix("## "),    modifier: null },
+    { icon: Heading3,   title: "Heading 3",     action: () => insertLinePrefix("### "),   modifier: null },
+    { icon: List,       title: "Bullet List",   action: () => insertLinePrefix("- "),     modifier: null },
+    { icon: ListOrdered, title: "Numbered List", action: () => insertLinePrefix("1. "),   modifier: null },
+    { icon: Quote,      title: "Blockquote",    action: () => insertLinePrefix("> "),     modifier: null },
+    { icon: Code2,      title: "Inline Code",   action: () => wrapSelection("`", "`"),    modifier: "mono" },
+    { icon: CodeSquare, title: "Code Block",    action: () => wrapSelection("```\n", "\n```"), modifier: "mono" },
   ];
 
   return (
     <div className="toolbar">
-      {buttons.map((btn) => (
-        <button
-          key={btn.title}
-          type="button"
-          title={btn.title}
-          className={["toolbar__button", btn.modifier && `toolbar__button--${btn.modifier}`].filter(Boolean).join(" ")}
-          onClick={btn.action}
-        >
-          {btn.label}
-        </button>
-      ))}
+      {pageTitle && (
+        <div className="toolbar__title">
+          {pageTitle}
+        </div>
+      )}
+      <div className="toolbar__buttons">
+        {buttons.map((btn) => {
+          const IconComponent = btn.icon;
+          return (
+            <button
+              key={btn.title}
+              type="button"
+              title={btn.title}
+              className={["toolbar__button", btn.modifier && `toolbar__button--${btn.modifier}`].filter(Boolean).join(" ")}
+              onClick={btn.action}
+            >
+              <IconComponent size={18} strokeWidth={2} />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

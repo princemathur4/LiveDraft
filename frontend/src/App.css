@@ -92,12 +92,26 @@
 }
 
 .app-layout__signout {
-  padding: 4px 12px;
-  border: 1px solid #ccc;
+  padding: 8px 20px;
+  border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
   background-color: #fff;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.app-layout__signout:hover {
+  background-color: #f5f5f5;
+  border-color: #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.app-layout__signout:active {
+  background-color: #ebebeb;
+  transform: scale(0.98);
 }
 
 .app-layout__content {

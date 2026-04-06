@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/Login";
@@ -105,8 +106,30 @@ function SearchBar({ onNavigateToSlug }) {
 // ── Main app shell ────────────────────────────────────────────────────────────
 function AppContent() {
   const { user, logout, authFetch, isInitialized } = useAuth();
-  const [currentSlug, setCurrentSlug] = useState(null);
+  const navigate = useNavigate();
+  const { slug: urlSlug } = useParams();
+  const [currentSlug, setCurrentSlug] = useState(urlSlug || null);
   const [authScreen, setAuthScreen]   = useState("login");
+
+  // Update URL when slug changes
+  useEffect(() => {
+    if (!urlSlug && currentSlug) {
+      navigate(`/page/${currentSlug}`, { replace: true });
+    }
+  }, [currentSlug, urlSlug, navigate]);
+
+  // Update currentSlug when URL changes
+  useEffect(() => {
+    if (urlSlug) {
+      setCurrentSlug(urlSlug);
+    }
+  }, [urlSlug]);
+
+  // Handle navigation to a page by slug
+  const handleNavigateToSlug = useCallback((slug) => {
+    setCurrentSlug(slug);
+    navigate(`/page/${slug}`);
+  }, [navigate]);
 
   // Wiki-link navigation: [[Page Name]] → find slug by title, then open it
   const navigateByTitle = useCallback(
@@ -119,11 +142,13 @@ function AppContent() {
           const exact = results.find(
             (r) => r.title.toLowerCase() === title.toLowerCase()
           ) ?? results[0];
-          if (exact) setCurrentSlug(exact.slug);
+          if (exact) {
+            handleNavigateToSlug(exact.slug);
+          }
         }
       } catch { /* ignore */ }
     },
-    [authFetch]
+    [authFetch, handleNavigateToSlug]
   );
 
   if (!isInitialized) {
@@ -143,14 +168,14 @@ function AppContent() {
 
   return (
     <div className="app-layout">
-      <Sidebar onPageClick={setCurrentSlug} activeSlug={currentSlug} />
+      <Sidebar onPageClick={handleNavigateToSlug} activeSlug={currentSlug} />
 
       <div className="app-layout__main-column">
         <div className="app-layout__topbar">
           {/* left spacer — keeps search centred via the 1fr | auto | 1fr grid */}
           <div />
           <div className="app-layout__topbar-search">
-            <SearchBar onNavigateToSlug={setCurrentSlug} />
+            <SearchBar onNavigateToSlug={handleNavigateToSlug} />
           </div>
           <div className="app-layout__topbar-right">
             <span>Signed in as <strong>{user.username}</strong></span>
@@ -161,18 +186,33 @@ function AppContent() {
         </div>
 
         <div className="app-layout__content">
-          {currentSlug ? (
-            <CollaborativeEditor
-              pageSlug={currentSlug}
-              username={user.username}
-              onNavigate={navigateByTitle}
+          <Routes>
+            <Route
+              path="/page/:slug"
+              element={
+                currentSlug ? (
+                  <CollaborativeEditor
+                    pageSlug={currentSlug}
+                    username={user.username}
+                    onNavigate={navigateByTitle}
+                  />
+                ) : (
+                  <div className="app-layout__placeholder">
+                    <h2>Loading…</h2>
+                  </div>
+                )
+              }
             />
-          ) : (
-            <div className="app-layout__placeholder">
-              <h2>Welcome, {user.username}</h2>
-              <p>Select a page from the sidebar or create a new one to get started.</p>
-            </div>
-          )}
+            <Route
+              path="/"
+              element={
+                <div className="app-layout__placeholder">
+                  <h2>Welcome, {user.username}</h2>
+                  <p>Select a page from the sidebar or create a new one to get started.</p>
+                </div>
+              }
+            />
+          </Routes>
         </div>
       </div>
     </div>

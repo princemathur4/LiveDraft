@@ -12,7 +12,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserOut)
 async def register(payload: UserRegister, db: Session = Depends(get_db)):
-    print("payload:", payload)
     if db.query(User).filter(User.username == payload.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
     if db.query(User).filter(User.email == payload.email).first():

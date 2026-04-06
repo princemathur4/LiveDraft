@@ -261,6 +261,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
           if (!cancelled) {
             setPreviewContent(initialContent);
             setPageInfo({
+              title: page.title ?? null,
               lastEditor: page.last_editor?.username ?? null,
               updatedAt: page.updated_at ?? null,
             });
@@ -364,9 +365,10 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
               fontSize: "15px",
               cursor: "pointer",
               border: "1px solid #ccc",
-              borderBottom: viewMode === mode ? "1px solid white" : "1px solid #f5f5f5",
+              borderBottom: viewMode === mode ? "1px solid #4f46e5" : "1px solid #f5f5f5",
               borderRadius: "4px 4px 0 0",
-              backgroundColor: viewMode === mode ? "#f5f5f5" : "#fff",
+              color: viewMode === mode ? "#fff" : "#000",
+              backgroundColor: viewMode === mode ? "#4f46e5" : "#fff",
               fontWeight: viewMode === mode ? "bold" : "normal",
               textTransform: "capitalize",
             }}
@@ -377,7 +379,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
       </div>
 
       {/* Toolbar - always visible */}
-      <Toolbar editorViewRef={editorViewRef} />
+      <Toolbar editorViewRef={editorViewRef} pageTitle={pageInfo?.title} />
 
       {/* Editor and/or Preview panes */}
       <div style={{ display: "flex", gap: "0" }}>

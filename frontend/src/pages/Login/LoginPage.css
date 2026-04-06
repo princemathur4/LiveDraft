@@ -1,5 +1,6 @@
 .login-page {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
@@ -8,6 +9,17 @@
   background-size: 600% 600%;
   animation: gradientMove 15s ease infinite; */
   font-family: sans-serif;
+}
+
+.login-page__title {
+  margin-bottom: 1.5rem;
+  font-size: 30px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow:
+    0 0 5px rgb(67, 65, 196),
+    0 0 10px rgb(67, 65, 196),
+    0 0 20px #0ff;
 }
 
 @keyframes gradientMove {
@@ -31,7 +43,7 @@
   max-width: 380px;
 }
 
-.login-page__title {
+.login-page__cardtitle {
   margin-bottom: 1.5rem;
   font-size: 22px;
   font-weight: bold;
@@ -57,7 +69,7 @@
 .login-page__submit {
   width: 100%;
   padding: 10px;
-  background-color: #4f46e5;
+  background-color: rgb(48, 160, 226);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -68,10 +80,20 @@
 .login-page__error {
   background-color: #fee2e2;
   color: #b91c1c;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 4px;
   margin-bottom: 1rem;
   font-size: 13px;
+  border-left: 4px solid #dc2626;
+  line-height: 1.5;
+}
+
+.login-page__error > div {
+  margin-bottom: 6px;
+}
+
+.login-page__error > div:last-child {
+  margin-bottom: 0;
 }
 
 .login-page__switch {

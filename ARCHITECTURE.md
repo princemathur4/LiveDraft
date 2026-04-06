@@ -135,8 +135,6 @@ co_edit/
         │   └── client.js        # apiFetch() base wrapper
         ├── context/
         │   └── AuthContext.jsx  # token persistence, user restore on refresh
-        ├── components/
-        │   └── ProtectedRoute.jsx
         └── pages/
             ├── Editor/
             │   ├── CollaborativeEditor.jsx   # CodeMirror + Yjs mount/teardown

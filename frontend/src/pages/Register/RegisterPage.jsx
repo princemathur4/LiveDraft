@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../api/client";
+import { parseApiError, formatErrorMessage } from "../../api/errors";
 import "./RegisterPage.css";
 
 function RegisterPage({ onSwitch, onSuccess }) {
@@ -21,15 +22,28 @@ function RegisterPage({ onSwitch, onSuccess }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Registration failed");
+      if (!res.ok) {
+        // Handle validation errors (422) and other errors
+        if (Array.isArray(data.detail)) {
+          // Pydantic validation error format
+          const errorsByField = parseApiError(data);
+          const formattedError = formatErrorMessage(errorsByField);
+          throw new Error(formattedError);
+        } else if (typeof data.detail === "string") {
+          // Simple error message
+          throw new Error(data.detail);
+        } else {
+          throw new Error("Registration failed");
+        }
+      }
 
-      const loginRes = await apiFetch("/api/auth/login", {
+      const signupRes = await apiFetch("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ username: form.username, password: form.password }),
       });
 
-      const loginData = await loginRes.json();
-      login(data, loginData.access_token);
+      const signupData = await signupRes.json();
+      login(data, signupData.access_token);
       onSuccess();
     } catch (err) {
       setError(err.message);
@@ -40,10 +54,17 @@ function RegisterPage({ onSwitch, onSuccess }) {
 
   return (
     <div className="register-page">
+      <h1 className="register-page__title">SyncScribe</h1>
       <div className="register-page__card">
-        <h2 className="register-page__title">Create your account</h2>
+        <h2 className="register-page__cardtitle">Create your account</h2>
 
-        {error && <div className="register-page__error">{error}</div>}
+        {error && (
+          <div className="register-page__error">
+            {error.split('\n').map((line, idx) => (
+              <div key={idx}>{line}</div>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <label className="register-page__label">Username</label>

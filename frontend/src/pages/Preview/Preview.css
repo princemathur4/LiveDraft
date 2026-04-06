@@ -4,34 +4,56 @@
   border-radius: 0 0 4px 4px;
   height: 66vh;
   overflow-y: auto;
+  overflow-x: auto;
   font-size: 14px;
   line-height: 1.6;
   font-family: sans-serif;
   background-color: #fafafa;
 }
 
+/* Preserve single newlines from markdown soft breaks as visible line breaks. */
+.preview p {
+  white-space: pre-wrap;
+}
+
 /* ── Tables (GFM) ────────────────────────────────────────────────────────── */
 .preview table {
   border-collapse: collapse;
   width: 100%;
+  min-width: 400px;
   margin: 1rem 0;
   font-size: 14px;
+  table-layout: auto;
+}
+
+.preview thead {
+  background-color: #f0f0f0;
 }
 
 .preview th,
 .preview td {
   border: 1px solid #d0d0d0;
-  padding: 6px 12px;
+  padding: 8px 12px;
   text-align: left;
+  word-break: break-word;
 }
 
 .preview th {
-  background-color: #f0f0f0;
   font-weight: 600;
+  background-color: #f0f0f0;
+  color: #333;
 }
 
-.preview tr:nth-child(even) td {
+.preview tbody tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+.preview tbody tr:nth-child(even) {
   background-color: #f8f8f8;
+}
+
+.preview tbody tr:hover {
+  background-color: #f0f0f0;
 }
 
 /* ── Wiki links [[Page Name]] ────────────────────────────────────────────── */

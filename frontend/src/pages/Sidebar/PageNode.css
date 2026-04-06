@@ -1,0 +1,82 @@
+.page-node__row {
+  display: flex;
+  align-items: center;
+  padding-right: 0.125rem;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: transparent;
+  color: #333;
+  font-weight: normal;
+  font-size: 15px;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.page-node__row--active {
+  background-color: #e8e8ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.page-node__toggle {
+  width: 16px;
+  margin-right: 4px;
+  font-size: 16px;
+  color: #999;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-node__content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.page-node__icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.page-node__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-node__add-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 4px;
+  border: none;
+  border-radius: 3px;
+  background-color: #e5e7eb;
+  color: #4f46e5;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.page-node__add-btn:hover {
+  background-color: #d1d5db;
+}
+
+.page-node__children {
+  border-left: 1px solid #e5e5e5;
+}
