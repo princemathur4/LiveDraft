@@ -70,6 +70,10 @@ function mountCollaborativeEditor({
 }) {
   let destroyed = false;
   let saveTimeoutId = null;
+  // Explicit dirty flag — set true on any user edit, false after a successful
+  // save. Used in cleanup to decide whether a flush is needed regardless of
+  // whether the debounce timer is still pending.
+  let isDirty = false;
 
   // 1. Yjs document
   const ydoc = new Y.Doc();
@@ -96,7 +100,10 @@ function mountCollaborativeEditor({
   // 4. Track WebSocket connection status
   const onProviderStatus = (event) => setStatus(event.status);
 
-  // PUT the current markdown to the backend.
+  // 6. The shared text field inside the Yjs doc (same field CodeMirror binds to)
+  const ytext = ydoc.getText("codemirror");
+
+  // PUT the current markdown to the backend (debounced path).
   const saveToBackend = async () => {
     if (destroyed) return;
     setSaveStatus("saving");
@@ -108,6 +115,7 @@ function mountCollaborativeEditor({
           last_edited_by: username,
         }),
       });
+      isDirty = false;
       if (!destroyed) setSaveStatus("saved");
     } catch (err) {
       console.error("Save failed:", err);
@@ -115,10 +123,12 @@ function mountCollaborativeEditor({
     }
   };
 
-  // Fire a best-effort save that survives component teardown or page unload.
-  // keepalive: true allows the browser to complete the fetch after the page/
-  // component is gone (navigation, tab close, refresh).
+  // Best-effort save used during teardown (page navigation, tab close).
+  // keepalive: true lets the browser complete the fetch even after the page/
+  // component is gone, which is the only reliable way to save on unload.
   const flushSave = () => {
+    if (!isDirty) return;
+    isDirty = false;
     authFetch(`/api/pages/${pageSlug}`, {
       method: "PUT",
       keepalive: true,
@@ -130,12 +140,10 @@ function mountCollaborativeEditor({
   };
 
   const scheduleDebouncedSave = () => {
+    isDirty = true;
     clearTimeout(saveTimeoutId);
     saveTimeoutId = setTimeout(saveToBackend, SAVE_DEBOUNCE_MS);
   };
-
-  // 6. The shared text field inside the Yjs doc (same field CodeMirror binds to)
-  const ytext = ydoc.getText("codemirror");
 
   // Seed the Yjs doc from the API response only when we are the first user in
   // the room (ytext is still empty after the server's sync-step-2 arrives).
@@ -156,6 +164,8 @@ function mountCollaborativeEditor({
     scheduleDebouncedSave();
   };
 
+  // On tab close / page refresh: cancel the pending debounce and flush
+  // immediately via a keepalive fetch so the save actually completes.
   const handleBeforeUnload = () => {
     clearTimeout(saveTimeoutId);
     flushSave();
@@ -174,14 +184,13 @@ function mountCollaborativeEditor({
   });
   editorViewRef.current = view;
 
-  // 9. Cleanup on unmount (and when pageSlug / username change)
+  // 9. Cleanup on unmount (triggered by page navigation or slug/username change)
   return () => {
-    // If a debounced save is pending (user navigated away before the 2 s
-    // window elapsed), flush it immediately so edits are not lost.
-    if (saveTimeoutId !== null) {
-      clearTimeout(saveTimeoutId);
-      flushSave();
-    }
+    // Cancel any pending debounce and flush if there are unsaved edits.
+    // This is the path that fires when the user switches to another page.
+    clearTimeout(saveTimeoutId);
+    flushSave();
+
     destroyed = true;
     ytext.unobserve(onYtextChange);
     window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -212,7 +221,13 @@ function CollaborativeEditor({ pageSlug, username }) {
   useEffect(() => {
     if (!editorContainerRef.current) return;
 
-    let cleanup;
+    // cancelled is set to true by the cleanup function if pageSlug/username
+    // changes while the initial fetch is still in flight. It prevents the
+    // editor from mounting in a zombie state after the effect is superseded.
+    let cancelled = false;
+    let teardown = null;
+
+    setPageLoading(true);
 
     const initEditor = async () => {
       let initialContent = "";
@@ -221,17 +236,18 @@ function CollaborativeEditor({ pageSlug, username }) {
         if (res.ok) {
           const page = await res.json();
           initialContent = page.body ?? "";
-          // Pre-populate preview so it's visible immediately
-          setPreviewContent(initialContent);
+          if (!cancelled) setPreviewContent(initialContent);
         }
       } catch (err) {
         console.error("Failed to load page content:", err);
       } finally {
-        setPageLoading(false);
+        if (!cancelled) setPageLoading(false);
       }
 
-      if (!editorContainerRef.current) return;
-      cleanup = mountCollaborativeEditor({
+      // If the effect was cleaned up while the fetch was in flight, bail out.
+      if (cancelled || !editorContainerRef.current) return;
+
+      teardown = mountCollaborativeEditor({
         parent: editorContainerRef.current,
         pageSlug,
         username,
@@ -248,7 +264,12 @@ function CollaborativeEditor({ pageSlug, username }) {
 
     initEditor();
 
-    return () => cleanup?.();
+    return () => {
+      cancelled = true;
+      // teardown may be null if the fetch hadn't returned yet — in that case
+      // the cancelled flag above prevents the editor from ever mounting.
+      teardown?.();
+    };
   }, [pageSlug, username, authFetch]);
 
   return (
