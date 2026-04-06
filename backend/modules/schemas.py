@@ -1,26 +1,18 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-import re
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 class UserRegister(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
-    email: str = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-
-    @field_validator("username")
-    @classmethod
-    def username_alphanumeric(cls, v: str) -> str:
-        if not re.match(r"^[a-zA-Z0-9_]+$", v):
-            raise ValueError("Username may only contain letters, numbers, and underscores")
-        return v
+    username: str
+    email: str
+    password: str
 
 
 class UserLogin(BaseModel):
-    username: str = Field(min_length=1, max_length=50)
-    password: str = Field(min_length=1, max_length=128)
+    username: str
+    password: str
 
 
 class TokenResponse(BaseModel):
@@ -39,14 +31,14 @@ class UserOut(BaseModel):
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
 class PageCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
-    body: str = Field(default="", max_length=500_000)
+    title: str
+    body: str = ""
     parent_id: Optional[int] = None  # null = root page, int = child of that page
 
 
 class PageUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    body: Optional[str] = Field(default=None, max_length=500_000)
+    title: Optional[str] = None
+    body: Optional[str] = None
     parent_id: Optional[int] = None
 
 

@@ -39,7 +39,6 @@ The database is seeded automatically with sample pages and two demo accounts:
 - **Editor toolbar** — quick formatting buttons for bold, italic, headers, code blocks, and lists.
 - **Desktop UI** — works on desktop browsers with a collapsible sidebar and clean layout.
 - **Database persistence** — all pages and user data persist in PostgreSQL; collaborative state fully recovers on reconnect.
-- **Real-time cursor indicators** — see which users are currently editing and their cursor positions.
 
 ### 📋 Planned Features
 
@@ -48,6 +47,7 @@ The database is seeded automatically with sample pages and two demo accounts:
 - **Version history & page rollback** — restore previous versions of pages with diff view and full revision history.
 - **Page-level permissions** — granular sharing controls (view-only, edit, admin) for specific pages or folders.
 - **File and image uploads** — embed images and attachments directly within pages.
+- **Real-time cursor indicators** — see which users are currently editing and their cursor positions.
 - **Comments and annotations** — inline comments on pages with threaded discussions.
 - **Page templates** — create reusable page templates for consistent documentation.
 - **Dark mode** — theme toggle for editor and UI.
