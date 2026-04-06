@@ -27,8 +27,8 @@ The database is seeded automatically with sample pages and two demo accounts:
 
 - **Real-time collaboration** — multiple users edit the same page simultaneously using Yjs CRDTs. Cursor positions and presence are visible live.
 - **Markdown editor** — CodeMirror 6 with syntax highlighting and a toggle-able live preview.
-- **Nested page tree** — pages can be organized hierarchically; the sidebar shows a collapsible tree with expand/collapse per node.
-- **Create pages** — create new pages from the sidebar with an optional parent page, generating a URL slug automatically.
+- **Nested page tree** — pages organized hierarchically; sidebar shows a collapsible tree with expand/collapse per node.
+- **Create pages** — create new pages from the sidebar with an optional parent, generating a URL slug automatically.
 - **Full-text search** — PostgreSQL `tsvector` search with highlighted snippets, debounced as you type.
 - **Wiki-links** — click `[[Page Name]]` links in preview to navigate directly to that page.
 - **Last edited by** — each page tracks who last edited it and when.
@@ -48,20 +48,13 @@ The database is seeded automatically with sample pages and two demo accounts:
 ```bash
 cd backend
 pip install -r requirements.txt
-```
-
-Create a `.env` file in `backend/`:
-
-```env
-DATABASE_URL=postgresql://<user>:<password>@localhost:5432/<dbname>
-SECRET_KEY=change-me
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+cp .env.example .env   # then fill in your values
 ```
 
 Seed the database, then start the server:
 
 ```bash
-python modules/seed.py
+python -m modules.seed   # creates tables + seeds demo data
 uvicorn app:app --reload --port 8000
 ```
 
@@ -111,24 +104,59 @@ Browser (React + CodeMirror 6 + Yjs)
 
 ---
 
-## Real-Time Sync Strategy
+## Technical Decisions
 
-Uses **Yjs**, a CRDT (Conflict-free Replicated Data Type) library.
+### Real-Time Sync: Yjs (CRDT)
 
-Every client holds a local copy of the Yjs document. When a user types, Yjs produces a compact binary update. That update is sent over WebSocket to the FastAPI relay, which broadcasts it to all other clients in the same room. Each client applies the update locally. Because CRDTs are mathematically guaranteed to converge, all clients end up with the same document regardless of the order updates arrive.
+The central design question was how to handle concurrent edits from multiple users.
 
-**Why Yjs over OT (Operational Transform):**
-- Yjs requires no server-side understanding of the document. The relay is stateless with respect to document semantics.
-- OT requires a central server to transform and sequence every operation.
-- Yjs handles offline edits and reconnection automatically via its sync protocol.
+**Options considered:**
+- **OT (Operational Transform)** — requires the server to understand, transform, and sequence every operation. Correct implementation is notoriously complex, especially around edge cases with concurrent deletions. Rejected due to complexity and the stateful server requirement.
+- **Last-write-wins** — simple but loses data silently when two users edit simultaneously. Unacceptable for a collaborative editor.
+- **Yjs (CRDT)** — chosen. Each client holds a full local copy of the document. Edits produce compact binary updates that are mathematically guaranteed to converge regardless of arrival order. The server relay is document-agnostic; it does not parse or transform any message.
 
-**Tradeoff accepted:** The server does not persist the live Yjs state — only the debounced REST saves (every ~2 seconds) hit the database. If the server restarts mid-session, clients resync from the last database snapshot, meaning up to 2 seconds of in-flight edits could be lost.
+**Tradeoffs accepted:**
+- The in-memory Yjs state is not persisted to the database on every keystroke — a debounced REST save runs every ~2 seconds. If the server restarts mid-session, clients resync from the last snapshot, so up to 2 seconds of in-flight edits can be lost.
+- Each room's accumulated Yjs state lives only in the relay process. A multi-process or multi-node deployment would require a shared state layer (e.g. Redis pub/sub).
+
+### WebSocket Lifecycle
+
+`y-websocket`'s `WebsocketProvider` handles reconnection automatically with exponential backoff. On reconnect, it re-executes the sync handshake (step 1 → step 2) so the client catches up on any updates it missed while offline.
+
+On the server, when the last client leaves a room the in-memory Yjs state is cleared. The next client to join re-seeds from the database via the `onInitialSync` callback, keeping the in-memory state consistent with PostgreSQL as the source of truth.
+
+### Database Schema
+
+Pages use a self-referential adjacency list (`parent_id → pages.id`) for the hierarchy. This keeps queries simple and the tree is assembled in a single O(n) pass in Python rather than requiring recursive SQL.
+
+Schema is managed via `SQLAlchemy`'s `Base.metadata.create_all` on startup (not Alembic migrations). This was a deliberate simplification — see Known Limitations.
+
+### Security
+
+- Search result snippets rendered via `dangerouslySetInnerHTML` are passed through **DOMPurify** (allowlist: `<mark>` only) before being injected into the DOM.
+- Markdown preview uses **ReactMarkdown**, which renders to React components rather than raw HTML, avoiding innerHTML injection entirely.
+- All secrets (`DATABASE_URL`, `SECRET_KEY`) are read from environment variables. No secrets are hardcoded.
+- Write endpoints require a valid JWT. Pydantic schemas enforce field length and format constraints on all inputs.
 
 ---
 
 ## Known Limitations
 
-- No version history or page diffs.
-- No file or image uploads.
-- No page-level permissions — all authenticated users can edit all pages.
-- Server restart drops in-memory Yjs state; clients recover from the last database save.
+- **No Alembic migrations** — schema is created via `create_all`. Adding a column in production requires a manual `ALTER TABLE` or a full re-seed.
+- **Single-process WebSocket relay** — Yjs room state is in-memory. Scaling to multiple backend processes requires a shared pub/sub layer (e.g. Redis).
+- **No version history** — pages are overwritten in place; there is no diff or rollback.
+- **No page-level permissions** — all authenticated users can edit all pages.
+- **No file or image uploads.**
+
+---
+
+## AI Usage
+
+AI tooling (Claude) was used throughout this project as a development accelerator:
+
+- **Boilerplate and scaffolding** — initial FastAPI router structure, SQLAlchemy model definitions, and Vite/React project setup were drafted with AI assistance and then reviewed and adjusted.
+- **Yjs protocol implementation** — the binary message framing for the y-websocket sync handshake (`build_sync_step1`, `make_sync_step2`, `extract_update` in `rooms.py`) was developed with AI help, then verified against the y-websocket source protocol spec.
+- **Debugging** — AI was used to diagnose the `passlib`/`bcrypt` 4.x version incompatibility and the Docker `sys.path` module resolution issue.
+- **Documentation** — this README was drafted with AI assistance based on the actual implemented code.
+
+All generated code was read, understood, and validated before being kept. The core architectural decisions (Yjs over OT, adjacency list hierarchy, debounced REST saves) were made independently.

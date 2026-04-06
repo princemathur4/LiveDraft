@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
@@ -84,7 +85,7 @@ function SearchBar({ onNavigateToSlug }) {
               <div className="search-result__title">{r.title}</div>
               <div
                 className="search-result__snippet"
-                dangerouslySetInnerHTML={{ __html: r.snippet }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(r.snippet, { ALLOWED_TAGS: ["mark"] }) }}
               />
             </div>
           ))}
