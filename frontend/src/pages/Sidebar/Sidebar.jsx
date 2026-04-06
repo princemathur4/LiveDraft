@@ -38,6 +38,41 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
     setCreating(true);
   };
 
+  const handleDeletePage = async (slug, title) => {
+    if (!window.confirm(`Delete "${title}"? All subpages will be deleted. This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await authFetch(`/api/pages/${slug}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete page");
+      await fetchTree();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete page.");
+    }
+  };
+
+  const handleRenamePage = async (slug, currentTitle) => {
+    const newTitle = window.prompt("New page title:", currentTitle);
+    if (!newTitle || !newTitle.trim() || newTitle.trim() === currentTitle) {
+      return;
+    }
+
+    try {
+      const res = await authFetch(`/api/pages/${slug}`, {
+        method: "PUT",
+        body: JSON.stringify({ title: newTitle.trim() }),
+      });
+
+      if (!res.ok) throw new Error("Failed to rename page");
+      await fetchTree();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to rename page.");
+    }
+  };
+
   const handleCreatePage = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
@@ -170,6 +205,8 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
             activeSlug={activeSlug}
             onPageClick={onPageClick}
             onAddClick={handleAddPage}
+            onDelete={handleDeletePage}
+            onRename={handleRenamePage}
             depth={0}
           />
         ))}
