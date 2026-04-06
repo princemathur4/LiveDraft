@@ -110,6 +110,7 @@ function AppContent() {
   const location = useLocation();
   const urlSlug = location.pathname.match(/^\/page\/(.+)/)?.[1] ?? null;
   const [currentSlug, setCurrentSlug] = useState(urlSlug || null);
+  const [sidebarKey, setSidebarKey]   = useState(0);
 
   // Update URL when slug changes
   useEffect(() => {
@@ -168,7 +169,7 @@ function AppContent() {
 
   return (
     <div className="app-layout">
-      <Sidebar onPageClick={handleNavigateToSlug} activeSlug={currentSlug} />
+      <Sidebar key={sidebarKey} onPageClick={handleNavigateToSlug} activeSlug={currentSlug} />
 
       <div className="app-layout__main-column">
         <div className="app-layout__topbar">
@@ -199,6 +200,15 @@ function AppContent() {
                     pageSlug={currentSlug}
                     username={user.username}
                     onNavigate={navigateByTitle}
+                    onPageRenamed={(newSlug) => {
+                      setSidebarKey((k) => k + 1);
+                      handleNavigateToSlug(newSlug);
+                    }}
+                    onPageDeleted={() => {
+                      setSidebarKey((k) => k + 1);
+                      setCurrentSlug(null);
+                      navigate("/");
+                    }}
                   />
                 ) : (
                   <div className="app-layout__placeholder">

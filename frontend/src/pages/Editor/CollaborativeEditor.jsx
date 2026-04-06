@@ -226,7 +226,7 @@ function mountCollaborativeEditor({
   };
 }
 
-function CollaborativeEditor({ pageSlug, username, onNavigate }) {
+function CollaborativeEditor({ pageSlug, username, onNavigate, onPageRenamed, onPageDeleted }) {
   const { authFetch } = useAuth();
   const editorContainerRef = useRef(null);
   // Ref to the mounted EditorView (Toolbar uses this to apply formatting)
@@ -300,6 +300,34 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
       teardown?.();
     };
   }, [pageSlug, username, authFetch]);
+
+  const handleRename = async (newTitle) => {
+    try {
+      const res = await authFetch(`/api/pages/${pageSlug}`, {
+        method: "PUT",
+        body: JSON.stringify({ title: newTitle, last_edited_by: username }),
+      });
+      if (!res.ok) throw new Error("Rename failed");
+      const updated = await res.json();
+      setPageInfo((prev) => ({ ...prev, title: updated.title }));
+      if (onPageRenamed) onPageRenamed(updated.slug, updated.title);
+    } catch (err) {
+      console.error("Rename failed:", err);
+      alert("Failed to rename page.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete "${pageInfo?.title ?? pageSlug}"? All subpages will be deleted as well. This cannot be undone.`)) return;
+    try {
+      const res = await authFetch(`/api/pages/${pageSlug}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      if (onPageDeleted) onPageDeleted();
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete page.");
+    }
+  };
 
   return (
     <div>
@@ -380,7 +408,12 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
       </div>
 
       {/* Toolbar - always visible */}
-      <Toolbar editorViewRef={editorViewRef} pageTitle={pageInfo?.title} />
+      <Toolbar
+        editorViewRef={editorViewRef}
+        pageTitle={pageInfo?.title}
+        onRename={handleRename}
+        onDelete={handleDelete}
+      />
 
       {/* Editor and/or Preview panes */}
       <div style={{ display: "flex", gap: "0" }}>

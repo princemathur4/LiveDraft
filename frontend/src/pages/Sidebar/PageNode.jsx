@@ -28,7 +28,7 @@ function PageNode({ node, activeSlug, onPageClick, onAddClick, depth = 0 }) {
   }, [activeSlug, hasActiveChild]);
 
   return (
-    <div>
+    <div className="page-node__wrapper">
       {/* Page row */}
       <div
         className={`page-node__row ${isActive ? "page-node__row--active" : ""}`}
