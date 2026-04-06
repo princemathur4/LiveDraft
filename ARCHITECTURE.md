@@ -2,7 +2,7 @@
 SYNC SCRIBE — ARCHITECTURE & ENGINEERING REFERENCE
 ================================================================================
 
-Last updated: 2026-04-06
+Last updated: 2026-04-07
 This document reflects the current state of the codebase. Sections marked
 [FIXED] describe bugs that existed in earlier revisions and have been resolved.
 
@@ -244,33 +244,36 @@ WHAT THE SERVER DOES (rooms.py + websocket.py)
   On client connect (before the message loop):
     1. Server → client: SYNC STEP 1 with empty state vector
        ("I have nothing — send me your full document state")
-    2. Server → client: SYNC STEP 2 with room.doc_state
+    2. Server → client: one SYNC STEP 2 per stored update (room.updates)
        ("Here is everything I currently have")
     These two messages complete the handshake. The client receives step 2,
     sets provider.synced = true, and emits the "sync" event.
 
   In the message loop:
     - SYNC_STEP_1 received: client is re-requesting state (e.g. reconnect).
-      Server responds with its current doc_state.
+      Server replays all updates in room.updates as individual SYNC STEP 2 messages.
     - SYNC_STEP_2 or SYNC_UPDATE received: client is pushing state or a live
-      edit. Server concatenates the raw Yjs update bytes into room.doc_state
-      and broadcasts the original message to all other clients.
+      edit. Server appends the raw Yjs update bytes to room.updates and
+      broadcasts the original message to all other clients.
     - MSG_AWARENESS: ephemeral presence data. Relayed only, never stored.
     - Unknown type: broadcast as-is for forward compatibility.
 
-  doc_state is a single concatenated bytes blob (not a list). Yjs applies
-  concatenated updates correctly because CRDT operations are commutative and
-  idempotent. This means a joining client receives exactly one send_bytes call
-  instead of N calls (one per historical update).
+  room.updates is a list of individual Yjs update blobs. On join, each is sent
+  as its own SYNC STEP 2 message so the client calls Y.applyUpdate() once per
+  message and all edits are applied in order.
+
+  Concatenating all updates into a single blob and sending as one message does
+  NOT work: the Yjs binary parser reads one encoded update structure and stops,
+  silently dropping all trailing bytes. This was the root cause of Bug 7 below.
 
 ROOM LIFECYCLE
 
   - Room is created on first client connect, stays alive as clients come and go.
-  - When the LAST client disconnects, doc_state is reset to b"".
+  - When the LAST client disconnects, room.updates is cleared.
     Rationale: the database is the single source of truth. Persisting in-memory
     Yjs state across empty-room periods caused divergence (see §7, Bug 2).
-  - Multi-user collaboration is unaffected: doc_state only clears when the room
-    is fully empty.
+  - Multi-user collaboration is unaffected: room.updates only clears when the
+    room is fully empty.
 
 FRONTEND SIDE (CollaborativeEditor.jsx)
 
@@ -371,7 +374,7 @@ ROOT CAUSE — chain of three failures:
 FIX — two-layer solution:
 
   Layer 1 (backend, rooms.py — primary fix):
-    reset doc_state to b"" when the last client leaves.
+    clear room.updates when the last client leaves.
     The next joiner always receives an empty sync step 2 → onInitialSync sees
     ytext == "" → seeds from the DB. Postgres is the single source of truth;
     the in-memory Yjs state is a cache for an active collaborative session only.
@@ -464,7 +467,7 @@ FIX (websocket.py + rooms.py):
   Full y-websocket binary protocol implemented:
   - Server proactively sends SYNC_STEP_1 + SYNC_STEP_2 on every new connect.
   - SYNC_STEP_1 messages from the client are answered with current doc_state.
-  - SYNC_STEP_2 / SYNC_UPDATE messages are merged into doc_state and broadcast.
+  - SYNC_STEP_2 / SYNC_UPDATE messages are appended to room.updates and broadcast.
   - MSG_AWARENESS messages are relayed without storage.
   - Variable-length uint (lib0 varint) encoding/decoding implemented in Python
     to correctly frame all messages.
@@ -472,6 +475,59 @@ FIX (websocket.py + rooms.py):
   With this fix, the "sync" event fires reliably on every connection. The
   frontend onInitialSync handler is the correct, race-free mechanism for seeding
   DB content into a fresh Yjs document.
+
+──────────────────────────────────────────────────────────────────────────────
+BUG 7: New joiners see only first-edit content; subsequent edits silently lost
+──────────────────────────────────────────────────────────────────────────────
+
+SYMPTOM: A user opens a page and the editor shows an outdated version — usually
+the content from when the page was first seeded, not the latest saved content.
+GET /api/pages/{slug} returns the correct updated body, but the editor and
+preview display a stale version. Observed on quick page refresh and whenever
+another user joins a room that has accumulated multiple edits.
+
+ROOT CAUSE — two factors combine:
+
+  Factor 1 — Concatenated Yjs updates silently truncate (rooms.py).
+    The backend stored all incoming Yjs binary blobs by concatenating them into
+    a single bytes value (room.doc_state += update). When a new client joined,
+    this entire blob was sent as one sync-step-2 message. The y-websocket
+    client passed the blob to Y.applyUpdate(), which uses a streaming binary
+    decoder. The decoder reads the first encoded update structure, reaches its
+    natural end, and returns — all subsequent concatenated bytes are silently
+    ignored. So a room with N edits delivered only the FIRST edit to new joiners.
+
+  Factor 2 — asyncio race: new WebSocket joins before old one is cleaned up.
+    On quick page refresh, the browser opens the new WebSocket connection before
+    the server has processed the close event on the old one. During this window,
+    room.clients = {old_ws, new_ws}. The old_ws disconnect subsequently removes
+    old_ws but room.clients is now {new_ws} — non-empty — so the room is NOT
+    cleared. The stale (truncated-apply) state is therefore served to the new
+    connection instead of the empty state that would trigger DB re-seeding.
+
+  Combined effect:
+    new joiner receives the first-ever update → Y.applyUpdate applies it →
+    ytext = "version 1" (not the latest). ytext is non-empty so onInitialSync
+    does not seed from initialContent (the correct DB content). Preview and
+    editor show stale content despite GET /api/pages returning the correct body.
+
+FIX (rooms.py):
+
+  Replace doc_state: bytes = b"" with updates: list[bytes] = [].
+  store_update() appends rather than concatenates.
+  send_server_state() iterates the list and sends each update as its own
+  sync-step-2 message. The client receives N messages → N Y.applyUpdate() calls
+  → all edits applied in order → ytext reflects the true current document state.
+
+  With all updates applied correctly, the race condition (Factor 2) becomes
+  harmless: even if room.updates is not cleared due to the race, the new
+  joiner's ytext still reflects the correct content because every historical
+  update was applied. The Yjs state and the DB are in sync, so no divergence
+  is visible.
+
+  The room.updates.clear() on last-client-leave (remove_client) is retained.
+  It ensures a solo user returning to a page after a clean disconnect always
+  gets an empty room → onInitialSync seeds from DB → correct content shown.
 
 
 --------------------------------------------------------------------------------

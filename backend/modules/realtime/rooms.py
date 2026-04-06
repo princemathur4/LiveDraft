@@ -5,10 +5,12 @@ from fastapi import WebSocket
 @dataclass
 class Room:
     clients: set[WebSocket] = field(default_factory=set)
-    # Accumulated Yjs updates merged into a single binary blob via concatenation.
-    # Yjs applies concatenated updates correctly (idempotent CRDT), so this is
-    # both correct and far cheaper than storing a list of individual updates.
-    doc_state: bytes = b""
+    # Yjs updates stored as individual blobs. Each update is sent to new joiners
+    # as a separate sync-step-2 message so the client calls Y.applyUpdate once
+    # per update. Concatenating into a single blob silently truncates after the
+    # first update because the Yjs binary parser stops at the end of the first
+    # encoded structure and ignores any trailing bytes.
+    updates: list[bytes] = field(default_factory=list)
 
 
 rooms: dict[str, Room] = {}
@@ -91,19 +93,26 @@ def get_or_create_room(name: str) -> Room:
 
 
 def store_update(room: Room, update: bytes) -> None:
-    """Merge an incremental Yjs update into the room's accumulated doc state."""
+    """Append an incremental Yjs update to the room's update list."""
     if update and update != _EMPTY_UPDATE:
-        room.doc_state += update
+        room.updates.append(update)
 
 
 async def send_server_state(ws: WebSocket, room: Room) -> None:
     """
-    Send the server's current doc state to a client as a sync step 2 message.
-    Receiving this (even the empty variant) causes the y-websocket client to
-    set provider.synced = true and emit the 'sync' event.
+    Send the server's current doc state to a joining client.
+
+    Each stored update is sent as its own sync-step-2 message. The
+    y-websocket client calls Y.applyUpdate() once per message, so every
+    update is applied in order. Sending them as a single concatenated blob
+    would cause the Yjs parser to silently drop all updates after the first.
+
+    Sending at least one message (even the empty variant) is required to
+    make the client set provider.synced = true and fire the 'sync' event.
     """
-    if room.doc_state:
-        await ws.send_bytes(make_sync_step2(room.doc_state))
+    if room.updates:
+        for update in room.updates:
+            await ws.send_bytes(make_sync_step2(update))
     else:
         await ws.send_bytes(make_sync_step2(_EMPTY_UPDATE))
 
@@ -111,18 +120,18 @@ async def send_server_state(ws: WebSocket, room: Room) -> None:
 async def remove_client(ws: WebSocket, room: Room) -> None:
     """Remove a client from a room.
 
-    When the room becomes empty, doc_state is reset to empty so the next
+    When the room becomes empty, the update list is cleared so the next
     joiner always re-seeds from the database (via the frontend onInitialSync
     path). This prevents stale in-memory Yjs state from diverging from the
     Postgres database, which is the single source of truth for page content.
 
-    Multi-user collaboration is unaffected: doc_state is only cleared when
+    Multi-user collaboration is unaffected: updates are only cleared when
     ALL clients have left, so a second user joining an active room still
-    receives the live Yjs state from the first user.
+    receives the full live Yjs state from the first user.
     """
     room.clients.discard(ws)
     if not room.clients:
-        room.doc_state = b""
+        room.updates.clear()
 
 
 async def broadcast(data: bytes, sender: WebSocket, room: Room) -> None:
