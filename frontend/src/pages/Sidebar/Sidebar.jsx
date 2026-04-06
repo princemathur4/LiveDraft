@@ -1,13 +1,31 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 
+// Helper function to check if activeSlug is in this node's subtree
+function hasActiveInSubtree(node, activeSlug) {
+  if (node.slug === activeSlug) return true;
+  if (node.children) {
+    return node.children.some((child) => hasActiveInSubtree(child, activeSlug));
+  }
+  return false;
+}
+
 // ── Single page node in the tree ─────────────────────────────────────────────
 // Renders the page title as a clickable item.
 // If the page has children, shows a toggle arrow to expand/collapse them.
-function PageNode({ node, activeSlug, onPageClick, depth = 0 }) {
-  const [isOpen, setIsOpen] = useState(depth === 0); // root pages open by default
+function PageNode({ node, activeSlug, onPageClick, onAddClick, depth = 0 }) {
+  const hasActiveChild = hasActiveInSubtree(node, activeSlug);
+  const [isOpen, setIsOpen] = useState(depth === 0 || hasActiveChild); // root pages and parents of active page open by default
   const hasChildren = node.children && node.children.length > 0;
   const isActive = node.slug === activeSlug;
+  const [showAddButton, setShowAddButton] = useState(false);
+
+  // Auto-expand when activeSlug changes and points to a descendant
+  useEffect(() => {
+    if (hasActiveChild && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [activeSlug, hasActiveChild]);
 
   return (
     <div>
@@ -16,8 +34,9 @@ function PageNode({ node, activeSlug, onPageClick, depth = 0 }) {
         style={{
           display: "flex",
           alignItems: "center",
-          paddingLeft: `${0.1 + depth * 1}rem`,
-          paddingRight: "0.25rem",
+          // Slightly tighter horizontal spacing for nested items.
+          paddingLeft: `${depth * 0.75}rem`,
+          paddingRight: "0.125rem",
           paddingTop: "4px",
           paddingBottom: "4px",
           borderRadius: "4px",
@@ -30,33 +49,37 @@ function PageNode({ node, activeSlug, onPageClick, depth = 0 }) {
         }}
         onMouseEnter={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = "#f0f0f0";
+          setShowAddButton(true);
         }}
         onMouseLeave={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+          setShowAddButton(false);
         }}
       >
         {/* Expand/collapse toggle - only shown if page has children */}
-        <span
-          onClick={(e) => {
-            e.stopPropagation(); // do not trigger page open
-            if (hasChildren) setIsOpen((prev) => !prev);
-          }}
-          style={{
-            width: "16px",
-            marginRight: "4px",
-            fontSize: "16px",
-            color: "#999",
-            flexShrink: 0,
-            visibility: hasChildren ? "visible" : "hidden",
-          }}
-        >
-          {isOpen ? "▾" : "▸"}
-        </span>
+        {hasChildren &&
+          <span
+            onClick={(e) => {
+              e.stopPropagation(); // do not trigger page open
+              if (hasChildren) setIsOpen((prev) => !prev);
+            }}
+            style={{
+              width: "16px",
+              marginRight: "4px",
+              fontSize: "16px",
+              color: "#999",
+              flexShrink: 0,
+              visibility: hasChildren ? "visible" : "hidden",
+            }}
+          >
+            {isOpen ? "▾" : "▸"}
+          </span>
+        }
 
         {/* Page icon + title */}
         <span
           onClick={() => onPageClick(node.slug)}
-          style={{ display: "flex", alignItems: "center", gap: "5px", flex: 1, overflow: "hidden" }}
+          style={{ display: "flex", alignItems: "center", gap: "5px", flex: 1, minWidth: 0, whiteSpace: "nowrap" }}
         >
           <span style={{ fontSize: "15px", flexShrink: 0 }}>
             {hasChildren ? "📂" : "📄"}
@@ -69,6 +92,43 @@ function PageNode({ node, activeSlug, onPageClick, depth = 0 }) {
             {node.title}
           </span>
         </span>
+
+        {/* Add child page button - shown on hover */}
+        {showAddButton && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddClick(node.id);
+            }}
+            title="Add child page"
+            style={{
+              flexShrink: 0,
+              width: "20px",
+              height: "20px",
+              padding: "0",
+              marginLeft: "4px",
+              border: "none",
+              borderRadius: "3px",
+              backgroundColor: "#e5e7eb",
+              color: "#4f46e5",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background-color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#d1d5db";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#e5e7eb";
+            }}
+          >
+            +
+          </button>
+        )}
       </div>
 
       {/* Recursively render children if expanded */}
@@ -80,6 +140,7 @@ function PageNode({ node, activeSlug, onPageClick, depth = 0 }) {
               node={child}
               activeSlug={activeSlug}
               onPageClick={onPageClick}
+              onAddClick={onAddClick}
               depth={depth + 1}
             />
           ))}
@@ -118,6 +179,12 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
   useEffect(() => {
     fetchTree();
   }, [fetchTree]);
+
+  const handleAddPage = (parentId) => {
+    setNewParentId(parentId);
+    setNewTitle("");
+    setCreating(true);
+  };
 
   const handleCreatePage = async (e) => {
     e.preventDefault();
@@ -182,8 +249,8 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
       }}>
         <span style={{ fontWeight: "bold", fontSize: "20px" }}>SyncScribe</span>
         <button
-          onClick={() => setCreating((prev) => !prev)}
-          title="New page"
+          onClick={() => { setNewParentId(null); setCreating((prev) => !prev); }}
+          title="New root-level page"
           style={{
             border: "none",
             fontWeight: 700,
@@ -210,6 +277,18 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
             gap: "6px",
           }}
         >
+          {newParentId && (
+            <div style={{
+              fontSize: "13px",
+              color: "#666",
+              padding: "4px 6px",
+              backgroundColor: "#f0f0f0",
+              borderRadius: "3px",
+              borderLeft: "3px solid #4f46e5",
+            }}>
+              Creating child of: <strong>{flatPages.find(p => p.id === newParentId)?.title || 'Unknown'}</strong>
+            </div>
+          )}
           <input
             autoFocus
             placeholder="Page title"
@@ -279,7 +358,7 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
       )}
 
       {/* Tree content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0.5rem" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "auto", padding: "0.5rem" }}>
         {loading && (
           <p style={{ fontSize: "15px", color: "#999", padding: "0.5rem" }}>
             Loading...
@@ -304,6 +383,7 @@ function Sidebar({ onPageClick, activeSlug, onPageCreated }) {
             node={node}
             activeSlug={activeSlug}
             onPageClick={onPageClick}
+            onAddClick={handleAddPage}
             depth={0}
           />
         ))}

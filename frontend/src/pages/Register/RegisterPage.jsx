@@ -40,8 +40,9 @@ function RegisterPage({ onSwitch, onSuccess }) {
 
   return (
     <div className="register-page">
+      <h1 className="register-page__title">SyncScribe</h1>
       <div className="register-page__card">
-        <h2 className="register-page__title">Create your account</h2>
+        <h2 className="register-page__cardtitle">Create your account</h2>
 
         {error && <div className="register-page__error">{error}</div>}
 

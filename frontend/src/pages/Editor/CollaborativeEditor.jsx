@@ -261,6 +261,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
           if (!cancelled) {
             setPreviewContent(initialContent);
             setPageInfo({
+              title: page.title ?? null,
               lastEditor: page.last_editor?.username ?? null,
               updatedAt: page.updated_at ?? null,
             });
@@ -377,7 +378,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate }) {
       </div>
 
       {/* Toolbar - always visible */}
-      <Toolbar editorViewRef={editorViewRef} />
+      <Toolbar editorViewRef={editorViewRef} pageTitle={pageInfo?.title} />
 
       {/* Editor and/or Preview panes */}
       <div style={{ display: "flex", gap: "0" }}>

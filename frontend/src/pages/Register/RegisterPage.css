@@ -1,5 +1,6 @@
 .register-page {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
@@ -8,6 +9,17 @@
   background-size: 600% 600%;
   animation: gradientMove 15s ease infinite; */
   font-family: sans-serif;
+}
+
+.register-page__title {
+  margin-bottom: 1.5rem;
+  font-size: 30px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow:
+    0 0 5px rgb(64, 43, 157),
+    0 0 10px #00f,
+    0 0 20px #0ff;
 }
 
 @keyframes gradientMove {
@@ -31,7 +43,7 @@
   max-width: 380px;
 }
 
-.register-page__title {
+.register-page__cardtitle {
   margin-bottom: 1.5rem;
   font-size: 22px;
   font-weight: bold;
