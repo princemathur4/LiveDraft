@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../api/client";
 import { parseApiError, formatErrorMessage } from "../../api/errors";
-import "./LoginPage.css";
+import "./LoginPage.scss";
 
 function LoginPage({ onSwitch, onSuccess }) {
   const { login } = useAuth();

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import Sidebar from "./pages/Sidebar";
 import CollaborativeEditor from "./pages/Editor";
-import "./App.css";
+import "./App.scss";
 
 // ── Search bar + results dropdown ────────────────────────────────────────────
 function SearchBar({ onNavigateToSlug }) {
@@ -65,15 +66,7 @@ function SearchBar({ onNavigateToSlug }) {
         value={query}
         onChange={handleChange}
         onFocus={() => results.length > 0 && setOpen(true)}
-        style={{
-          width: "100%",
-          padding: "8px 14px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          fontSize: "15px",
-          outline: "none",
-          boxSizing: "border-box",
-        }}
+        className="search-input"
       />
       {open && results.length > 0 && (
         <div className="search-dropdown">
@@ -106,6 +99,7 @@ function SearchBar({ onNavigateToSlug }) {
 // ── Main app shell ────────────────────────────────────────────────────────────
 function AppContent() {
   const { user, logout, authFetch, isInitialized } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const urlSlug = location.pathname.match(/^\/page\/(.+)/)?.[1] ?? null;
@@ -179,6 +173,14 @@ function AppContent() {
             <SearchBar onNavigateToSlug={handleNavigateToSlug} />
           </div>
           <div className="app-layout__topbar-right">
+            <button
+              type="button"
+              className="app-layout__theme-toggle"
+              onClick={toggleTheme}
+              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? "☀️" : "🌙"}
+            </button>
             <span>Signed in as <strong>{user.username}</strong></span>
             <button type="button" className="app-layout__signout" onClick={() => {
               setCurrentSlug(null);
@@ -238,7 +240,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </AuthProvider>
   );
 }

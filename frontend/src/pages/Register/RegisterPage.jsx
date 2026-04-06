@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../api/client";
 import { parseApiError, formatErrorMessage } from "../../api/errors";
-import "./RegisterPage.css";
+import "./RegisterPage.scss";
 
 function RegisterPage({ onSwitch, onSuccess }) {
   const { login } = useAuth();

@@ -9,7 +9,7 @@ import { yCollab } from "y-codemirror.next";
 import Toolbar from "../Toolbar";
 import Preview from "../Preview";
 import { useAuth } from "../../context/AuthContext";
-import "./CollaborativeEditor.css";
+import "./CollaborativeEditor.scss";
 
 const WS_BASE_URL = "ws://localhost:8000/ws";
 const AWARENESS_OUTDATED_MS = 3000;
@@ -338,25 +338,25 @@ function CollaborativeEditor({ pageSlug, username, onNavigate, onPageRenamed, on
         gap: "1rem",
         marginBottom: "0.5rem",
         fontSize: "13px",
-        color: "#555",
+        color: "var(--text-secondary)",
       }}>
         <span>
           Status:{" "}
-          <strong style={{ color: status === "connected" ? "green" : "orange" }}>
+          <strong style={{ color: status === "connected" ? "#4ade80" : "#f97316" }}>
             {status}
           </strong>
         </span>
         <span>Users editing: <strong>{connectedUsers}</strong></span>
         <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
           <span style={{
-            color: saveStatus === "saved" ? "green" : saveStatus === "error" ? "red" : "#999",
+            color: saveStatus === "saved" ? "#4ade80" : saveStatus === "error" ? "#ef4444" : "var(--text-muted)",
           }}>
             {saveStatus === "saving" && "Saving..."}
             {saveStatus === "saved" && "Saved"}
             {saveStatus === "error" && "Save failed"}
           </span>
           {pageInfo?.lastEditor && (
-            <span style={{ color: "#999" }}>
+            <span style={{ color: "var(--text-muted)" }}>
               Last edited by <strong>{pageInfo.lastEditor}</strong>
               {pageInfo.updatedAt && <> · {formatRelativeTime(pageInfo.updatedAt)}</>}
             </span>
@@ -384,25 +384,14 @@ function CollaborativeEditor({ pageSlug, username, onNavigate, onPageRenamed, on
       </div>
 
       {/* View mode toggle */}
-      <div style={{ display: "flex", justifyContent: "center", gap: "4px", marginBottom: "0" }}>
+      <div className="view-mode-buttons">
         {["edit", "split", "preview"].map((mode) => (
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
-            style={{
-              padding: "4px 12px",
-              fontSize: "15px",
-              cursor: "pointer",
-              border: "1px solid #ccc",
-              borderBottom: viewMode === mode ? "1px solid #4f46e5" : "1px solid #f5f5f5",
-              borderRadius: "4px 4px 0 0",
-              color: viewMode === mode ? "#fff" : "#000",
-              backgroundColor: viewMode === mode ? "#4f46e5" : "#fff",
-              fontWeight: viewMode === mode ? "bold" : "normal",
-              textTransform: "capitalize",
-            }}
+            className={`view-mode-button ${viewMode === mode ? "active" : ""}`}
           >
-            {mode}
+            {mode.charAt(0).toUpperCase() + mode.slice(1)}
           </button>
         ))}
       </div>
@@ -426,7 +415,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate, onPageRenamed, on
           }}
         >
           {pageLoading && (
-            <div style={{ padding: "1rem", color: "#999", fontSize: "13px" }}>
+            <div style={{ padding: "1rem", color: "var(--text-muted)", fontSize: "13px" }}>
               Loading page…
             </div>
           )}
@@ -435,7 +424,7 @@ function CollaborativeEditor({ pageSlug, username, onNavigate, onPageRenamed, on
 
         {/* Preview pane - hidden in edit mode */}
         {viewMode !== "edit" && (
-          <div style={{ flex: 1, borderLeft: viewMode === "split" ? "2px solid #eee" : "none" }}>
+          <div style={{ flex: 1, borderLeft: viewMode === "split" ? "2px solid var(--border-color)" : "none" }}>
             <Preview content={previewContent} onNavigate={onNavigate} />
           </div>
         )}

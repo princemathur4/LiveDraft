@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
-import "./Preview.css";
+import "./Preview.scss";
 
 // Convert [[Page Name]] wiki-link syntax into a standard markdown link using a
 // special #wiki: anchor prefix that the custom link renderer below recognises.

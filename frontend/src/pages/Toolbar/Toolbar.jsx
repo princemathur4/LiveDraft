@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./Toolbar.css";
+import "./Toolbar.scss";
 import {
   Bold,
   Italic,

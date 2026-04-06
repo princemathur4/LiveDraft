@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import PageNode from "./PageNode";
-import "./Sidebar.css";
+import "./Sidebar.scss";
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 function Sidebar({ onPageClick, activeSlug, onPageCreated }) {

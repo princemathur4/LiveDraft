@@ -1,0 +1,76 @@
+.preview {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0 0 4px 4px;
+  height: 66vh;
+  overflow-y: auto;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.preview p {
+  white-space: pre-wrap;
+}
+
+// ── Tables ──────────────────────────────────────────────────────────────────
+.preview table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 400px;
+  margin: 1rem 0;
+  font-size: 14px;
+  table-layout: auto;
+}
+
+.preview thead {
+  background-color: var(--bg-secondary);
+}
+
+.preview th,
+.preview td {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+  word-break: break-word;
+}
+
+.preview th {
+  font-weight: 600;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.preview tbody tr:nth-child(odd) {
+  background-color: var(--bg-primary);
+}
+
+.preview tbody tr:nth-child(even) {
+  background-color: var(--bg-secondary);
+}
+
+.preview tbody tr:hover {
+  background-color: var(--bg-tertiary);
+}
+
+// ── Wiki Links ──────────────────────────────────────────────────────────────
+.wiki-link {
+  color: var(--accent-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  border-radius: 2px;
+  padding: 0 1px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--accent-secondary);
+    text-decoration-style: solid;
+    background-color: rgba(113, 137, 240, 0.1);
+  }
+}

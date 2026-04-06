@@ -1,0 +1,81 @@
+/* ── Global Styles ──────────────────────────────────────────────────────────── */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+// ── Color System ────────────────────────────────────────────────────────────
+:root[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f6f7;
+  --bg-tertiary: #ebebed;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --text-muted: #9aa0a6;
+  --border-color: #dadce0;
+  --border-light: #d2d3d4;
+  --shadow-color: rgba(32, 33, 36, 0.1);
+  --shadow-color-hover: rgba(32, 33, 36, 0.15);
+  --button-active-bg: #f8f9fa;
+  --accent-primary: #5b7cfa;
+  --accent-secondary: #748dff;
+}
+
+:root[data-theme="dark"] {
+  --bg-primary: #1a1f2e;
+  --bg-secondary: #232a3b;
+  --bg-tertiary: #2d3647;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --text-muted: #5f6368;
+  --border-color: #3a4251;
+  --border-light: #414a5a;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-color-hover: rgba(0, 0, 0, 0.5);
+  --button-active-bg: #2d3647;
+  --accent-primary: #7189f0;
+  --accent-secondary: #8fa3f8;
+}
+
+// ── Body Styles ────────────────────────────────────────────────────────────
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// ── Scrollbar Styling ──────────────────────────────────────────────────────
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 5px;
+
+  &:hover {
+    background: var(--border-color);
+  }
+}
+
+// Firefox
+* {
+  scrollbar-color: var(--border-light) var(--bg-secondary);
+  scrollbar-width: thin;
+}

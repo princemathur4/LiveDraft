@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./PageNode.css";
+import "./PageNode.scss";
 
 // Helper function to check if activeSlug is in this node's subtree
 function hasActiveInSubtree(node, activeSlug) {
@@ -67,11 +67,11 @@ function PageNode({ node, activeSlug, onPageClick, onAddClick, onDelete, onRenam
         style={{ paddingLeft: `${depth * 0.75}rem` }}
         onContextMenu={handleContextMenu}
         onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.backgroundColor = "#f0f0f0";
+          // if (!isActive) e.currentTarget.style.backgroundColor = "#f0f0f0";
           setShowAddButton(true);
         }}
         onMouseLeave={(e) => {
-          if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+          // if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
           setShowAddButton(false);
         }}
       >

@@ -1,0 +1,111 @@
+// ── CodeMirror Yjs Selection Info ──────────────────────────────────────────
+.cm-ySelectionInfo {
+  font-size: 12px !important;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 2px solid var(--accent-primary);
+  color: white;
+  opacity: 1 !important;
+  font-family: sans-serif;
+  background-color: var(--accent-primary) !important;
+}
+
+// ── CodeMirror Dark Mode Support ───────────────────────────────────────────
+:root[data-theme="dark"] {
+  .cm-editor {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .cm-gutters {
+    background-color: var(--bg-secondary) !important;
+    border-right-color: var(--border-color) !important;
+  }
+
+  .cm-linenumber {
+    color: var(--text-muted) !important;
+  }
+
+  .cm-activeLineGutter {
+    background-color: var(--bg-tertiary) !important;
+  }
+
+  .cm-cursor {
+    border-left-color: var(--text-primary) !important;
+  }
+
+  .cm-selectionBackground {
+    background-color: rgba(113, 137, 240, 0.2) !important;
+  }
+
+  .cm-matchingBracket {
+    background-color: rgba(113, 137, 240, 0.1) !important;
+  }
+
+  .cm-content {
+    background-color: var(--bg-primary) !important;
+  }
+
+  .cm-line {
+    color: var(--text-primary) !important;
+  }
+
+  // Syntax highlighting
+  .cm-atom,
+  .cm-string {
+    color: #8ab4f8 !important;
+  }
+
+  .cm-number {
+    color: #aecbfa !important;
+  }
+
+  .cm-variable {
+    color: var(--text-primary) !important;
+  }
+
+  .cm-keyword {
+    color: #f8b500 !important;
+  }
+
+  .cm-comment {
+    color: var(--text-muted) !important;
+    font-style: italic;
+  }
+}
+
+:root[data-theme="light"] {
+  .cm-editor {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .cm-gutters {
+    background-color: var(--bg-secondary) !important;
+    border-right-color: var(--border-color) !important;
+  }
+
+  .cm-linenumber {
+    color: var(--text-muted) !important;
+  }
+
+  .cm-activeLineGutter {
+    background-color: var(--bg-secondary) !important;
+  }
+
+  .cm-cursor {
+    border-left-color: var(--text-primary) !important;
+  }
+
+  .cm-selectionBackground {
+    background-color: rgba(91, 124, 250, 0.15) !important;
+  }
+
+  .cm-content {
+    background-color: var(--bg-primary) !important;
+  }
+
+  .cm-line {
+    color: var(--text-primary) !important;
+  }
+}
