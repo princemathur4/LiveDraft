@@ -3,22 +3,22 @@
   align-items: center;
   gap: 12px;
   padding: 8px;
-  background-color: #f5f5f5;
-  border: 1px solid #ccc;
+  background-color: #4f46e5;
   border-bottom: none;
   border-radius: 4px 4px 0 0;
 }
 
 .toolbar__title {
-  font-size: 16px;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
+  margin-left: 18px;
   margin-right: auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 0 22px;
+  padding: 0 12px;
 }
 
 .toolbar__buttons {
@@ -30,8 +30,8 @@
 .toolbar__button {
   padding: 5px 8px;
   cursor: pointer;
-  border: 1px solid #ccc;
-  border-radius: 3px;
+  border: 1px solid #6d5db6ea;
+  border-radius: 6px;
   background-color: #fff;
   display: flex;
   align-items: center;
@@ -40,8 +40,8 @@
 }
 
 .toolbar__button:hover {
-  background-color: #f0f0f0;
-  border-color: #999;
+  background-color: #dad4eeea;
+  border-color: #5c48b6ea;
 }
 
 .toolbar__button:active {
