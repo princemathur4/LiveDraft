@@ -41,6 +41,7 @@ The database is seeded automatically with sample pages and two demo accounts:
 - **Desktop UI** — works on desktop browsers with a collapsible sidebar and clean layout.
 - **Database persistence** — all pages and user data persist in PostgreSQL; collaborative state fully recovers on reconnect.
 - **Real-time cursor indicators** — see which users are currently editing and their cursor positions.
+- **Dark mode** — theme toggle for editor and UI.
 
 ### 📋 Planned Features
 
@@ -51,7 +52,6 @@ The database is seeded automatically with sample pages and two demo accounts:
 - **File and image uploads** — embed images and attachments directly within pages.
 - **Comments and annotations** — inline comments on pages with threaded discussions.
 - **Page templates** — create reusable page templates for consistent documentation.
-- **Dark mode** — theme toggle for editor and UI.
 - **Export to PDF** — download pages as formatted PDFs.
 
 ---
