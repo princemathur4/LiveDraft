@@ -182,3 +182,14 @@ AI tooling (Claude) was used throughout this project as a development accelerato
 - **Documentation** — this README was drafted with AI assistance based on the actual implemented code.
 
 All generated code was read, understood, and validated before being kept. The core architectural decisions (Yjs over OT, adjacency list hierarchy, debounced REST saves) were made independently.
+
+## Appearance
+### Light mode
+<img width="1512" height="949" alt="Screenshot 2026-04-07 at 2 19 29 AM" src="https://github.com/user-attachments/assets/88894612-e687-4354-ac3d-29cf14be01f6" />
+<img width="1512" height="949" alt="Screenshot 2026-04-07 at 2 19 39 AM" src="https://github.com/user-attachments/assets/0f7fc6a9-87b2-4aa7-b63d-23fed3ffb770" />
+
+
+### Dark mode
+<img width="1512" height="949" alt="Screenshot 2026-04-07 at 2 19 50 AM" src="https://github.com/user-attachments/assets/28f932a6-2918-44c1-a8eb-6b4ad60d1bc2" />
+<img width="1512" height="949" alt="Screenshot 2026-04-07 at 2 19 59 AM" src="https://github.com/user-attachments/assets/e9400b68-17b8-465d-8e46-c033a0fa9f6d" />
+
